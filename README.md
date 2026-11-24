@@ -1,28 +1,30 @@
-# Work Order Matcher — Frontend Demo
+# Work Order Matcher
 
 ## Run
 
-From this folder, start a local static server:
+Install PHP dependencies and start the PHP development server:
 
 ```powershell
-python -m http.server 8000
+composer install
+php -S 127.0.0.1:8001
 ```
 
-Open `http://127.0.0.1:8000/`.
+Open `http://127.0.0.1:8001/`.
 
 ## Test the demo
 
-1. Upload one PDF at a time in each PDF category using browse or drag-and-drop. Files are simulated only; PDF contents are not read.
-2. Open **Extracted Records** to search, filter, sort, expand descriptions, and clear the view.
-3. Choose **Run Matching** in the Workspace to start the simulated matching process.
-4. Open **Matching Results** to filter statuses, select rows, review a pair, confirm/reject matches, or create a manual match.
-5. Use **Export Results** to download a mock CSV containing only confirmed 7-digit Sequence and 9-digit ELB WO pairs.
-6. Test **Reset Matching** and **New Session** from their confirmation dialogs.
+1. Upload one text-based PDF or the source XLSX containing the complete W/O table.
+2. Review extracted W/O, A/C, Date, ATA, and Description fields.
+3. Choose **Run Matching** to apply reference, date, A/C, ATA, and fuzzy-description rules.
+4. Review uncertain pairs in **Needs Review**, then confirm or reject them.
+5. Use **Export Excel** to download confirmed identifier pairs only.
+6. Test **Reset Matching**, **Delete PDF**, and **New Session** from their confirmation dialogs.
 
-## Phase 2 integration points
+## API
 
-- Replace `handleFiles()` with multipart upload endpoints and real file metadata from the PHP API.
-- Replace `extractRecords()` with records returned by Smalot PDF Parser.
-- Replace `mockMatches` and `rerun` with server-side matching data and matching-job status endpoints.
-- Replace the CSV Blob implementation with a server-generated XLSX download if required.
-- Replace local session state with PHP/MySQL session persistence only after frontend approval.
+- `POST api.php?action=extract` accepts one PDF or XLSX. PDFs use Smalot PDF Parser; XLSX files use PhpSpreadsheet.
+- `POST api.php?action=match` accepts extracted rows and returns rule-based matches.
+- Extraction diagnostics include file type, character count, identifier count, parsed/rejected rows, and rejection samples.
+- PDF parsing uses positioned text fragments and discovers the W/O, A/C, Date, ATA, and Description columns from each page header. Rows with missing or ambiguous fields are returned as `valid: false` for review instead of being silently discarded.
+- Development-only PDF diagnostics can be enabled by setting `WOM_DEV_DIAGNOSTICS=true` before starting PHP. The extraction response then includes the first 50 extracted lines per page and a redacted identifier context. This is off by default and document text is never written to production logs.
+- Scanned PDFs return an explicit no-text error; OCR is not silently assumed.

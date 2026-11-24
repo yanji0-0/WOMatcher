@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>document.documentElement.dataset.theme=localStorage.getItem('wom-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light')</script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -20,6 +21,11 @@
     </a>
     <div class="topbar-actions">
       <div class="session-indicator" title="Current matching session"><span class="session-dot"></span><span>Session</span><strong id="sessionName">WOM-2026-042</strong></div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Switch appearance">
+        <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>
+        <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg>
+        <span id="themeLabel">Dark</span>
+      </button>
       <button class="btn btn-secondary btn-compact" id="newSessionBtn">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         New Session
@@ -39,30 +45,24 @@
         <div><p class="eyebrow">PDF Intake</p><h1>Upload source documents</h1></div>
         <div class="heading-actions">
           <button class="btn btn-ghost" id="resetBtn" disabled>Reset Matching</button>
-          <button class="btn btn-secondary" id="rerunBtn"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 1-2.34-5.66L20 7M20 3v4h-4"/></svg>Run Matching</button>
+          <button class="btn btn-primary" id="rerunBtn" disabled><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 1-2.34-5.66L20 7M20 3v4h-4"/></svg>Run Matching</button>
         </div>
       </div>
 
-      <div class="demo-notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span><strong>Frontend demo:</strong> Files and matches are simulated locally. No PDF data is uploaded or stored.</span></div>
+      <div class="demo-notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span><strong>Single source PDF:</strong> Upload one text-based PDF containing the complete W/O table. Records are extracted locally by the PHP matching service.</span></div>
 
       <div class="upload-grid">
-        <article class="upload-card" data-type="sequence">
-          <div class="upload-card-header"><div class="file-type-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5M10 13h5M10 17h5"/></svg></div><div><h2>Sequence PDF</h2><p>7-digit Sequence Number records</p></div></div>
-          <div class="drop-zone" id="sequenceDrop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><strong>Drop PDF here</strong><span>or</span><button class="btn btn-secondary browse-btn" data-target="sequenceInput">Browse Files</button><input type="file" accept="application/pdf,.pdf" id="sequenceInput" hidden></div>
-          <div class="file-area" id="sequenceFiles"></div>
-        </article>
-
-        <article class="upload-card" data-type="elb">
-          <div class="upload-card-header"><div class="file-type-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5M10 13h5M10 17h5"/></svg></div><div><h2>ELB WO PDF</h2><p>9-digit ELB work order records</p></div></div>
-          <div class="drop-zone" id="elbDrop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><strong>Drop PDF here</strong><span>or</span><button class="btn btn-secondary browse-btn" data-target="elbInput">Browse Files</button><input type="file" accept="application/pdf,.pdf" id="elbInput" hidden></div>
-          <div class="file-area" id="elbFiles"></div>
+        <article class="upload-card single-upload-card" data-type="source">
+          <div class="upload-card-header"><div class="file-type-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5M10 13h5M10 17h5"/></svg></div><div><h2>Work order source file</h2><p>PDF or XLSX containing 7-digit Sequence and 9-digit ELB WO values in the W/O column</p></div></div>
+          <div class="drop-zone" id="sourceDrop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><strong>Drop PDF or XLSX here</strong><span>or</span><button class="btn btn-secondary browse-btn" data-target="sourceInput">Browse Files</button><input type="file" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx" id="sourceInput" hidden></div>
+          <div class="file-area" id="sourceFiles"></div>
         </article>
       </div>
 
       <section class="workspace-overview">
         <div class="section-heading compact"><div><p class="eyebrow">Processing Overview</p><h2>Current session</h2></div></div>
         <div class="metric-grid">
-          <article class="metric"><span class="metric-label">Source PDFs</span><strong id="pdfMetric">0</strong><small>uploaded locally</small></article>
+          <article class="metric"><span class="metric-label">Source PDF</span><strong id="pdfMetric">0</strong><small>one file per session</small></article>
           <article class="metric"><span class="metric-label">Extracted records</span><strong id="recordMetric">0</strong><small id="recordMetricDetail">Waiting for PDF upload</small></article>
           <article class="metric"><span class="metric-label">Potential matches</span><strong id="potentialMetric">0</strong><small>ready for review</small></article>
           <article class="metric"><span class="metric-label">Confirmed</span><strong id="confirmedMetric">0</strong><small>approved matches</small></article>
@@ -78,23 +78,34 @@
         <select id="recordSort" class="select-control" aria-label="Sort records"><option value="newest">Date: newest first</option><option value="oldest">Date: oldest first</option></select>
       </div>
       <div class="table-container"><table><thead><tr><th>Record Type</th><th>Sequence No. / ELB WO</th><th><button class="sort-button" data-sort-records>Date <svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button></th><th>Work Description</th><th>Source PDF</th><th>Extraction Status</th></tr></thead><tbody id="recordsBody"></tbody></table></div>
-      <div class="empty-state" id="recordsEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5"/><path d="M10 13h5M10 17h5"/></svg></div><h3>No extracted records</h3><p>Upload both PDF types to begin extraction.</p><button class="btn btn-secondary" data-go="workspace">Go to Upload</button></div>
+      <div class="empty-state" id="recordsEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5"/><path d="M10 13h5M10 17h5"/></svg></div><h3>No extracted records</h3><p>Upload one source PDF to begin extraction.</p><button class="btn btn-secondary" data-go="workspace">Go to Upload</button></div>
       <div class="pagination" id="recordPagination"></div>
     </section>
 
     <section id="matchesView" class="view">
-      <div class="section-heading"><div><p class="eyebrow">Match Review</p><h1>Matching results</h1></div><button class="btn btn-primary" id="exportBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export Results</button></div>
-      <div class="match-summary" id="matchSummary"></div>
-      <div class="table-toolbar matches-toolbar">
-        <label class="search-field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="matchSearch" type="search" placeholder="Search either identifier"></label>
-        <select id="matchStatusFilter" class="select-control" aria-label="Filter by match status"><option value="all">All statuses</option><option value="Confirmed">Confirmed</option><option value="Suggested">Suggested</option><option value="Unmatched">Unmatched</option><option value="Conflict">Conflict</option></select>
-        <button class="btn btn-secondary bulk-action" id="confirmSelectedBtn" disabled>Confirm Match</button>
-        <button class="btn btn-ghost bulk-action" id="rejectSelectedBtn" disabled>Reject Match</button>
-        <button class="btn btn-secondary bulk-action" id="manualMatchBtn">Manual Match</button>
+      <div class="section-heading"><div><p class="eyebrow">Match Review</p><h1>Matching results</h1></div><button class="btn btn-primary" id="exportBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export Excel</button></div>
+      <div class="result-tabs" role="tablist" aria-label="Matching result sections">
+        <button class="result-tab is-active" role="tab" aria-selected="true" data-result-tab="matched">Matched <span id="matchedCount">0</span></button>
+        <button class="result-tab" role="tab" aria-selected="false" data-result-tab="review">Needs Review <span id="reviewCount">0</span></button>
       </div>
-      <div class="table-container"><table class="match-table"><thead><tr><th class="check-col"><input type="checkbox" id="selectAllMatches" aria-label="Select all matches"></th><th><button class="sort-button">7-digit Sequence No.</button></th><th><button class="sort-button">9-digit ELB WO</button></th><th>Match Status</th><th>Actions</th></tr></thead><tbody id="matchesBody"></tbody></table></div>
-      <div class="empty-state" id="matchesEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></div><h3>No matching results</h3><p>Upload source PDFs and run matching to generate suggested pairs.</p><button class="btn btn-secondary" data-go="workspace">Go to Upload</button></div>
-      <div class="pagination" id="matchPagination"></div>
+      <section class="result-panel is-active" id="matchedPanel" data-result-panel="matched">
+        <div class="result-heading"><div><h2>Matched</h2><p>Confirmed matching pairs only.</p></div><strong id="matchedTotal">0 pairs</strong></div>
+        <div class="table-toolbar matches-toolbar">
+          <label class="search-field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="matchedSearch" type="search" placeholder="Search identifiers"></label>
+          <button class="btn btn-secondary" id="matchedSortBtn" data-sort="asc">Sequence No. <span aria-hidden="true">↑</span></button>
+        </div>
+        <div class="table-container"><table class="match-table"><thead><tr><th><button class="sort-button" id="matchedSequenceSort">7-digit Sequence No. <span aria-hidden="true">↕</span></button></th><th>9-digit ELB WO</th></tr></thead><tbody id="matchedBody"></tbody></table></div>
+        <div class="empty-state" id="matchedEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></div><h3>No matched pairs</h3><p>Confirmed matches will appear here after review.</p></div>
+      </section>
+      <section class="result-panel" id="reviewPanel" data-result-panel="review">
+        <div class="result-heading"><div><h2>Needs Review</h2><p>Uncertain, conflicting, and unmatched records.</p></div><strong id="reviewTotal">0 records</strong></div>
+        <div class="table-toolbar matches-toolbar">
+          <label class="search-field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="reviewSearch" type="search" placeholder="Search identifiers"></label>
+          <button class="btn btn-secondary" id="manualMatchBtn">Manual Match</button>
+        </div>
+        <div class="table-container"><table class="match-table review-table"><thead><tr><th>7-digit Sequence No.</th><th>Suggested 9-digit ELB WO</th><th>Match Score</th><th>Action</th></tr></thead><tbody id="reviewBody"></tbody></table></div>
+        <div class="empty-state" id="reviewEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5 5.5-5.5"/></svg></div><h3>No records need review</h3><p>Uncertain and unmatched records will appear here after matching.</p></div>
+      </section>
     </section>
   </main>
 
@@ -108,12 +119,12 @@
 
   <div class="modal" id="confirmModal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-icon"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></div><h2 id="modalTitle">Confirm action</h2><p id="modalMessage"></p><div class="modal-actions"><button class="btn btn-secondary" data-close-modal>Cancel</button><button class="btn btn-danger" id="modalConfirmBtn">Confirm</button></div></div></div>
 
-  <div class="modal" id="exportModal" aria-hidden="true"><div class="modal-backdrop" data-close-export></div><div class="modal-panel export-modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><header class="modal-header"><div><p class="eyebrow">Excel Export</p><h2 id="exportTitle">Export confirmed matches</h2></div><button class="icon-btn" data-close-export aria-label="Close export"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header><div class="export-summary"><div><span>Confirmed matches</span><strong id="exportCount">0</strong></div><div><span>Export filename</span><strong id="exportFilename">confirmed-work-order-matches.csv</strong></div><div><span>Format</span><strong>CSV demo · XLSX in Phase 2</strong></div></div><p class="export-note">This frontend export includes only the two identifier columns.</p><div class="modal-actions"><button class="btn btn-secondary" data-close-export>Cancel</button><button class="btn btn-primary" id="downloadCsvBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export CSV</button></div></div></div>
+  <div class="modal" id="exportModal" aria-hidden="true"><div class="modal-backdrop" data-close-export></div><div class="modal-panel export-modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><header class="modal-header"><div><p class="eyebrow">Excel Export</p><h2 id="exportTitle">Export confirmed matches</h2></div><button class="icon-btn" data-close-export aria-label="Close export"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header><div class="export-summary"><div><span>Confirmed matches</span><strong id="exportCount">0</strong></div><div><span>Export filename</span><strong id="exportFilename">confirmed-work-order-matches.csv</strong></div><div><span>Format</span><strong>Excel-compatible CSV</strong></div></div><p class="export-note">This frontend export includes only the two identifier columns.</p><div class="modal-actions"><button class="btn btn-secondary" data-close-export>Cancel</button><button class="btn btn-primary" id="downloadCsvBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export Excel</button></div></div></div>
 
   <div class="modal" id="manualModal" aria-hidden="true"><div class="modal-backdrop" data-close-manual></div><div class="modal-panel manual-modal" role="dialog" aria-modal="true"><h2>Create manual match</h2><div class="manual-fields"><label>7-digit Sequence No.<input id="manualSequence" inputmode="numeric" maxlength="7" placeholder="6397261"></label><label>9-digit ELB WO<input id="manualElb" inputmode="numeric" maxlength="9" placeholder="100000314"></label></div><div class="modal-actions"><button class="btn btn-secondary" data-close-manual>Cancel</button><button class="btn btn-primary" id="createManualBtn">Create Match</button></div></div></div>
 
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
-  <div class="loading-overlay" id="loadingOverlay" aria-hidden="true"><div class="loading-content"><span class="spinner"></span><strong>Matching in progress</strong><span>Comparing dates, references, and descriptions…</span></div></div>
+  <div class="loading-overlay" id="loadingOverlay" aria-hidden="true"><div class="loading-content"><span class="spinner"></span><strong>Matching work orders...</strong><span>Comparing dates, references, and descriptions.</span></div></div>
 
   <script src="app.js"></script>
 </body>
