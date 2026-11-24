@@ -56,6 +56,10 @@ function setupDropZone(type){
 }
 
 function handleFiles(type,files){
+  if(state.files[type].length){
+    toast("One PDF allowed",`Remove the attached ${type === "sequence" ? "Sequence" : "ELB WO"} PDF before attaching another.`,"error");
+    return;
+  }
   [...files].forEach(file=>{
     if(file.type && file.type!=="application/pdf" || !file.name.toLowerCase().endsWith(".pdf")){ toast("Invalid file","Only PDF files can be added.","error"); return; }
     if(state.files[type].some(f=>f.name===file.name)){ toast("Duplicate file",`${file.name} is already in this session.`,"error"); return; }
@@ -76,6 +80,8 @@ function renderFiles(){
       item.innerHTML=`<div class="file-item-icon">${iconFile}</div><div class="file-info"><strong title="${file.name}">${file.name}</strong><span>${formatSize(file.size)} · Upload complete</span></div><button class="file-remove" aria-label="Remove ${file.name}" data-remove="${type}" data-index="${index}">${iconTrash}</button><div class="file-progress"><i></i></div>`;
       area.appendChild(item);
     });
+    const drop=$(`#${type}Drop`);
+    if(drop) drop.style.display=state.files[type].length ? "none" : "flex";
   });
   $$("[data-remove]").forEach(btn=>btn.addEventListener("click",()=>removeFile(btn.dataset.remove,Number(btn.dataset.index))));
   $("#pdfMetric").textContent=state.files.sequence.length+state.files.elb.length;
