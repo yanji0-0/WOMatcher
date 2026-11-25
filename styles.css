@@ -87,3 +87,14 @@ html[data-theme="dark"] #reviewPanel .review-section-row td{background:var(--dan
 .shared-term{background:#ffe19a;color:#4d3700;border-radius:3px;padding:1px 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .highlight-legend{margin:0 0 10px;color:var(--muted);font-size:11px}.highlight-legend mark{margin-right:3px;background:#ffe19a;color:#4d3700;border-radius:3px;padding:2px 4px}
 html[data-theme="dark"] .shared-term,html[data-theme="dark"] .highlight-legend mark{background:#6a4c13;color:#ffe5a3}
+
+/* Uploaded-file state and delete control */
+.file-info .file-state-badge{display:inline-flex;align-items:center;gap:5px;width:max-content;margin-top:7px;padding:3px 7px;border-radius:999px;background:var(--primary-soft);color:var(--primary);font-size:10px;font-weight:700}
+.file-state-badge svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.file-item.is-complete{border-color:color-mix(in srgb,var(--success) 45%,var(--border))}.file-item.is-complete .file-item-icon,.file-item.is-complete .file-state-badge{background:var(--success-soft);color:var(--success)}
+.file-item.is-failed{border-color:color-mix(in srgb,var(--danger) 45%,var(--border))}.file-item.is-failed .file-state-badge{background:var(--danger-soft);color:var(--danger)}
+.file-item.is-processing .file-progress i{width:55%;animation:fileProgress 1.15s ease-in-out infinite alternate}.file-item.is-failed .file-progress i{width:100%;background:var(--danger)}
+@keyframes fileProgress{from{transform:translateX(-25%)}to{transform:translateX(95%)}}
+.file-remove{display:grid;place-items:center;flex:none;padding:0;border:1px solid transparent;background:transparent;color:var(--muted);width:34px;height:34px;border-radius:7px;line-height:1;transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .15s ease}
+.file-remove svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.file-remove:hover{background:var(--danger-soft);border-color:color-mix(in srgb,var(--danger) 35%,transparent);color:var(--danger)}.file-remove:active{transform:scale(.94)}
