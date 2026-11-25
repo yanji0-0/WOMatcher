@@ -66,6 +66,7 @@ button::after,.action-link::after,.file-remove::after{content:"";position:absolu
 .footer-details{display:flex;align-items:center;justify-content:flex-end;gap:18px;font-size:11px}.footer-details a{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-weight:600;text-decoration:none}.footer-details a:hover{color:var(--primary)}.footer-details svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .footer-status{display:inline-flex;align-items:center;gap:6px}.footer-status i{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px var(--success-soft)}
 .footer-note{max-width:1444px;margin:16px auto 0;padding-top:14px;border-top:1px solid var(--border);font-size:10px;text-align:center}
+.export-summary label{color:var(--muted)}.export-filename-input{width:100%;height:36px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);color:var(--text);padding:0 10px;font-size:12px;font-weight:600}.export-filename-input:focus{border-color:var(--primary);outline:0;box-shadow:0 0 0 3px var(--focus-ring)}
 @media(max-width:700px){.site-footer{padding:20px 16px}.site-footer-inner{align-items:flex-start;flex-direction:column}.footer-details{justify-content:flex-start;flex-wrap:wrap;gap:12px 16px}.footer-note{text-align:left}}
 
 /* Keep result tables fully dark; scoped strongly to beat the base light table rules. */
@@ -98,3 +99,8 @@ html[data-theme="dark"] .shared-term,html[data-theme="dark"] .highlight-legend m
 .file-remove{display:grid;place-items:center;flex:none;padding:0;border:1px solid transparent;background:transparent;color:var(--muted);width:34px;height:34px;border-radius:7px;line-height:1;transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .15s ease}
 .file-remove svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .file-remove:hover{background:var(--danger-soft);border-color:color-mix(in srgb,var(--danger) 35%,transparent);color:var(--danger)}.file-remove:active{transform:scale(.94)}
+
+/* Product logo */
+.brand-logo{display:block;width:50px;height:50px;object-fit:contain;flex:none;filter:drop-shadow(0 3px 7px rgba(0,18,45,.18))}
+.footer-logo{width:46px;height:46px}
+@media(max-width:600px){.brand-logo{width:43px;height:43px}.footer-logo{width:40px;height:40px}}

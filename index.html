@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="PDF-based work order matching workspace">
   <title>Work Order Matcher</title>
+  <link rel="icon" type="image/png" href="assets/aviation-maintenance-logo.png">
+  <link rel="apple-touch-icon" href="assets/aviation-maintenance-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,9 +16,7 @@
 <body>
   <header class="topbar">
     <a class="brand" href="#" aria-label="Work Order Matcher home">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M10 12h5M10 16h5"/></svg>
-      </span>
+      <img class="brand-logo" src="assets/aviation-maintenance-logo.png" alt="" aria-hidden="true">
       <span>Work Order Matcher</span>
     </a>
     <div class="topbar-actions">
@@ -116,9 +116,7 @@
   <footer class="site-footer">
     <div class="site-footer-inner">
       <div class="footer-brand">
-        <span class="brand-mark footer-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M10 12h5M10 16h5"/></svg>
-        </span>
+        <img class="brand-logo footer-logo" src="assets/aviation-maintenance-logo.png" alt="" aria-hidden="true">
         <div><strong>Work Order Matcher</strong><span>Layout-aware extraction and assisted record matching</span></div>
       </div>
       <div class="footer-details">
@@ -143,7 +141,7 @@
 
   <div class="modal" id="confirmModal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-icon"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></div><h2 id="modalTitle">Confirm action</h2><p id="modalMessage"></p><div class="modal-actions"><button class="btn btn-secondary" data-close-modal>Cancel</button><button class="btn btn-danger" id="modalConfirmBtn">Confirm</button></div></div></div>
 
-  <div class="modal" id="exportModal" aria-hidden="true"><div class="modal-backdrop" data-close-export></div><div class="modal-panel export-modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><header class="modal-header"><div><p class="eyebrow">Excel Export</p><h2 id="exportTitle">Export confirmed matches</h2></div><button class="icon-btn" data-close-export aria-label="Close export"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header><div class="export-summary"><div><span>Confirmed matches</span><strong id="exportCount">0</strong></div><div><span>Export filename</span><strong id="exportFilename">confirmed-work-order-matches.csv</strong></div><div><span>Format</span><strong>Excel-compatible CSV</strong></div></div><p class="export-note">This frontend export includes only the two identifier columns.</p><div class="modal-actions"><button class="btn btn-secondary" data-close-export>Cancel</button><button class="btn btn-primary" id="downloadCsvBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export Excel</button></div></div></div>
+  <div class="modal" id="exportModal" aria-hidden="true"><div class="modal-backdrop" data-close-export></div><div class="modal-panel export-modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><header class="modal-header"><div><p class="eyebrow">Excel Export</p><h2 id="exportTitle">Export confirmed matches</h2></div><button class="icon-btn" data-close-export aria-label="Close export"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header><div class="export-summary"><div><span>Confirmed matches</span><strong id="exportCount">0</strong></div><div><label for="exportFilename">Export filename</label><input class="export-filename-input" id="exportFilename" type="text" value="confirmed-work-order-matches.csv" maxlength="120" spellcheck="false" aria-describedby="exportFilenameHint"></div><div><span>Format</span><strong>Excel-compatible CSV</strong></div></div><p class="export-note" id="exportFilenameHint">Rename the file if needed. The .csv extension is added automatically.</p><div class="modal-actions"><button class="btn btn-secondary" data-close-export>Cancel</button><button class="btn btn-primary" id="downloadCsvBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export Excel</button></div></div></div>
 
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true"><div class="loading-content"><span class="spinner"></span><strong>Matching work orders...</strong><span>Comparing dates, references, and descriptions.</span></div></div>

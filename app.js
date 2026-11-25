@@ -57,7 +57,7 @@ function renderMatches(){
   $("#matchedPanel .table-container").style.display=matched.length?"block":"none";$("#reviewPanel .table-container").style.display=review.length?"block":"none";updateCounts();
 }
 async function runMatching(){if(!state.file||state.file.status==="Extraction failed"){toast("Matching unavailable","Upload a valid text-based PDF first.","error");return}$("#rerunBtn").disabled=true;$("#loadingOverlay").classList.add("is-open");try{const response=await fetch("api.php?action=match",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({records:state.records})});const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||"Matching failed.");state.matches=result.matches;renderMatches();$('[data-result-tab="matched"]').click();switchView("matches");toast("Matching complete",`${result.matches.length} records categorized for review.`)}catch(error){const message=error instanceof TypeError?"The PHP API is unavailable. Start the app with: php -S 127.0.0.1:8001":error.message;toast("Matching failed",message,"error")}finally{$("#loadingOverlay").classList.remove("is-open");updateCounts()}}
-function confirmMatch(id){const m=state.matches.find(x=>x.id===id);if(!m||!m.elb)return;const duplicate=state.matches.find(x=>x.id!==id&&x.status==="Confirmed"&&x.elb===m.elb);if(duplicate){toast("Duplicate assignment",`${m.elb} is already assigned to ${duplicate.sequence}.`,"error");return}m.status="Confirmed";renderMatches();toast("Match confirmed",`${m.sequence} matched with ${m.elb}.`)}
+function confirmMatch(id){const m=state.matches.find(x=>x.id===id);if(!m||!m.elb)return;const duplicate=state.matches.find(x=>x.id!==id&&x.status==="Confirmed"&&x.elb===m.elb);if(duplicate){toast("Duplicate assignment",`${m.elb} is already assigned to ${duplicate.sequence}.`,"error");return}m.status="Confirmed";state.reviewedMatches.delete(id);renderMatches();toast("Match confirmed",`${m.sequence} matched with ${m.elb} and moved to Matched.`)}
 function openReview(id){
   const m=state.matches.find(x=>x.id===id);if(!m)return;
   state.reviewedMatches.add(id);renderMatches();
@@ -75,5 +75,16 @@ $("#rerunBtn").onclick=runMatching;
 $("#matchedSearch").oninput=renderMatches;$("#reviewSearch").oninput=renderMatches;$("#reviewStatusFilter").onchange=renderMatches;$("#recordSearch").oninput=renderRecords;$("#recordTypeFilter").onchange=renderRecords;$("#recordSort").onchange=renderRecords;$("#matchedSortBtn").onclick=()=>{state.sort=state.sort==="asc"?"desc":"asc";$("#matchedSortBtn").innerHTML=`Sequence No. <span>${state.sort==="asc"?"↑":"↓"}</span>`;renderMatches()};$("#matchedSequenceSort").onclick=()=>$("#matchedSortBtn").click();
 $$("[data-result-tab]").forEach(b=>b.onclick=()=>{$$("[data-result-tab]").forEach(x=>{x.classList.toggle("is-active",x===b);x.setAttribute("aria-selected",x===b)});$$("[data-result-panel]").forEach(x=>x.classList.toggle("is-active",x.dataset.resultPanel===b.dataset.resultTab))});
 $("#exportBtn").onclick=()=>{$("#exportCount").textContent=state.matches.filter(m=>m.status==="Confirmed").length;$("#exportModal").classList.add("is-open")};function closeExport(){$("#exportModal").classList.remove("is-open")}$$("[data-close-export]").forEach(b=>b.onclick=closeExport);$("#downloadCsvBtn").onclick=()=>{const rows=state.matches.filter(m=>m.status==="Confirmed"&&m.sequence&&m.elb);const csv=["7-digit Sequence No.,9-digit ELB WO",...rows.map(m=>`="${m.sequence}",="${m.elb}"`)].join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="confirmed-work-order-matches.csv";a.click();URL.revokeObjectURL(url);closeExport();toast("Export ready","Confirmed pairs were exported as text identifiers.")}
+// Allow users to rename exports while keeping a safe CSV filename.
+$("#exportBtn").addEventListener("click",()=>requestAnimationFrame(()=>$("#exportFilename").focus()));
+$("#downloadCsvBtn").onclick=()=>{
+  const rows=state.matches.filter(m=>m.status==="Confirmed"&&m.sequence&&m.elb);
+  const csv=["7-digit Sequence No.,9-digit ELB WO",...rows.map(m=>`="${m.sequence}",="${m.elb}"`)].join("\n");
+  let filename=$("#exportFilename").value.trim().replace(/[<>:"\/\\|?*\u0000-\u001F]/g,"-").replace(/[. ]+$/g,"")||"confirmed-work-order-matches";
+  if(!filename.toLowerCase().endsWith(".csv"))filename+=".csv";
+  $("#exportFilename").value=filename;
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);closeExport();toast("Export ready",`${filename} was exported with ${rows.length} confirmed pair${rows.length===1?"":"s"}.`);
+};
 $("#themeToggle").onclick=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");setTheme(document.documentElement.dataset.theme);
 setupClickFeedback();setupUpload();renderFile();renderRecords();renderMatches();
