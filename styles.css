@@ -59,6 +59,15 @@ button::after,.action-link::after,.file-remove::after{content:"";position:absolu
 .toast{animation:toastEnter .25s cubic-bezier(.2,.8,.2,1) both}
 @keyframes toastEnter{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 
+/* Site footer */
+.site-footer{border-top:1px solid var(--border);background:color-mix(in srgb,var(--surface) 92%,transparent);padding:24px 28px 18px;color:var(--muted)}
+.site-footer-inner{max-width:1444px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.footer-brand{display:flex;align-items:center;gap:11px;min-width:0}.footer-mark{width:32px;height:32px;flex:none}.footer-brand strong{display:block;color:var(--text);font-size:13px}.footer-brand span:not(.brand-mark){display:block;margin-top:3px;font-size:11px}
+.footer-details{display:flex;align-items:center;justify-content:flex-end;gap:18px;font-size:11px}.footer-details a{display:inline-flex;align-items:center;gap:6px;color:var(--text);font-weight:600;text-decoration:none}.footer-details a:hover{color:var(--primary)}.footer-details svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.footer-status{display:inline-flex;align-items:center;gap:6px}.footer-status i{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px var(--success-soft)}
+.footer-note{max-width:1444px;margin:16px auto 0;padding-top:14px;border-top:1px solid var(--border);font-size:10px;text-align:center}
+@media(max-width:700px){.site-footer{padding:20px 16px}.site-footer-inner{align-items:flex-start;flex-direction:column}.footer-details{justify-content:flex-start;flex-wrap:wrap;gap:12px 16px}.footer-note{text-align:left}}
+
 /* Keep result tables fully dark; scoped strongly to beat the base light table rules. */
 html[data-theme="dark"] #matchedPanel .table-container,
 html[data-theme="dark"] #reviewPanel .table-container,
