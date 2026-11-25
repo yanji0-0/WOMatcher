@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>document.documentElement.dataset.theme=localStorage.getItem('wom-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light')</script>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261125-2">
 </head>
 <body>
   <header class="topbar">
@@ -94,7 +94,7 @@
           <label class="search-field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="matchedSearch" type="search" placeholder="Search identifiers"></label>
           <button class="btn btn-secondary" id="matchedSortBtn" data-sort="asc">Sequence No. <span aria-hidden="true">↑</span></button>
         </div>
-        <div class="table-container"><table class="match-table"><thead><tr><th><button class="sort-button" id="matchedSequenceSort">7-digit Sequence No. <span aria-hidden="true">↕</span></button></th><th>9-digit ELB WO</th></tr></thead><tbody id="matchedBody"></tbody></table></div>
+        <div class="table-container"><table class="match-table"><thead><tr><th><button class="sort-button" id="matchedSequenceSort">7-digit Sequence No. <span aria-hidden="true">↕</span></button></th><th>9-digit ELB WO</th><th>Match Score</th><th>Action</th></tr></thead><tbody id="matchedBody"></tbody></table></div>
         <div class="empty-state" id="matchedEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></div><h3>No matched pairs</h3><p>Confirmed matches will appear here after review.</p></div>
       </section>
       <section class="result-panel" id="reviewPanel" data-result-panel="review">
@@ -126,6 +126,6 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true"><div class="loading-content"><span class="spinner"></span><strong>Matching work orders...</strong><span>Comparing dates, references, and descriptions.</span></div></div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20261125-2"></script>
 </body>
 </html>

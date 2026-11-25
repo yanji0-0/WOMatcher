@@ -1,19 +1,52 @@
 <?php
 declare(strict_types=1);
 
+// Keep PHP warnings/fatal pages out of an endpoint that promises JSON.
+// Errors are still written to the configured PHP error log.
+ob_start();
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 use Smalot\PdfParser\Parser;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-
-require_once __DIR__ . '/vendor/autoload.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 function respond(array $payload, int $status = 200): never
 {
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
     http_response_code($status);
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    echo $json === false
+        ? '{"ok":false,"error":"The server could not encode its response."}'
+        : $json;
     exit;
 }
+
+set_exception_handler(function (Throwable $error): never {
+    error_log((string) $error);
+    respond(['ok' => false, 'error' => 'The extraction service encountered an internal error. Check the PHP error log for details.'], 500);
+});
+
+register_shutdown_function(function (): void {
+    $error = error_get_last();
+    if ($error === null || !in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        return;
+    }
+    error_log(sprintf('%s in %s:%d', $error['message'], $error['file'], $error['line']));
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    echo json_encode(['ok' => false, 'error' => 'The extraction service encountered a fatal error. Check the PHP error log for details.']);
+});
+
+require_once __DIR__ . '/vendor/autoload.php';
 
 function normalizeText(string $value): string
 {
@@ -26,7 +59,7 @@ function normalizeText(string $value): string
 function normalizeDate(string $value): ?string
 {
     $value = trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
-    foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'd.m.Y', 'm/d/Y', 'm-d-Y', 'd/m/y', 'd-m-y', 'd.M.Y', 'd-M-Y', 'd-M-y', 'M d, Y', 'd M Y', 'd M y'] as $format) {
+    foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'd.m.Y', 'm/d/Y', 'm-d-Y', 'n/j/Y', 'n-j-Y', 'd/m/y', 'd-m-y', 'n/j/y', 'n-j-y', 'd.M.Y', 'd-M-Y', 'd-M-y', 'M d, Y', 'd M Y', 'd M y'] as $format) {
         $date = DateTimeImmutable::createFromFormat('!' . $format, $value);
         if ($date instanceof DateTimeImmutable && $date->format($format) === $value) {
             return $date->format('Y-m-d');
@@ -201,6 +234,119 @@ function parseLayoutPage(object $pageObject, string $text, int $page): array
     return [$successful, $partial, $rejected, ['mode' => 'positioned', 'headerLine' => $header['line'] + 1]];
 }
 
+function parseTextOrderPage(string $text, int $page): array
+{
+    $datePattern = '(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|\d{1,2}[-.]?[A-Za-z]{3}[-.]?\d{2,4})';
+    $identifierPattern = '(?:\d{7}|\d{9})';
+    $pattern = '/(?<!\d)(?<identifier>' . $identifierPattern . ')(?!\d)\s+'
+        . '(?<ac>\S+)\s+(?<date>' . $datePattern . ')\s+(?<ata>\S+)\s+'
+        . '(?<description>.+?)(?=\s+' . $identifierPattern . '\s+\S+\s+' . $datePattern . '\s+|\z)/isu';
+    preg_match_all($pattern, $text, $matches, PREG_SET_ORDER);
+    $records = [];
+    $rejected = [];
+    foreach ($matches as $index => $match) {
+        $date = normalizeDate(cleanCell($match['date']));
+        $description = cleanCell(preg_replace('/\s+/u', ' ', $match['description']) ?? $match['description']);
+        if ($date === null || $description === '') {
+            $rejected[] = ['page' => $page, 'row' => $index + 1, 'reason' => 'Text-order fallback found a row with an invalid date or empty description.'];
+            continue;
+        }
+        $identifier = $match['identifier'];
+        $records[] = [
+            'identifier' => $identifier,
+            'type' => strlen($identifier) === 7 ? 'Sequence' : 'ELB WO',
+            'ac' => cleanCell($match['ac']),
+            'date' => $date,
+            'ata' => cleanCell($match['ata']),
+            'description' => $description,
+            'page' => $page,
+            'row' => $index + 1,
+            'sourceText' => cleanCell($match[0]),
+            'valid' => true,
+            'reviewReasons' => [],
+        ];
+    }
+    return [$records, $rejected];
+}
+
+function splitMetadataRows(object $page): array
+{
+    $rows = [];
+    foreach (positionedLines($page) as $lineIndex => $line) {
+        $items = array_values(array_filter(array_column($line['items'], 'text'), static fn(string $value): bool => $value !== ''));
+        if (count($items) !== 4) continue;
+        $identifier = preg_replace('/\s+/u', '', $items[0]);
+        if (!preg_match('/^(\d{7}|\d{9})$/', $identifier)) continue;
+        $date = normalizeDate($items[2]);
+        if ($date === null) continue;
+        $rows[] = [
+            'identifier' => $identifier,
+            'ac' => cleanCell($items[1]),
+            'date' => $date,
+            'ata' => cleanCell($items[3]),
+            'row' => $lineIndex + 1,
+            'sourceText' => $line['text'],
+        ];
+    }
+    return $rows;
+}
+
+function splitDescriptionRows(object $page): array
+{
+    $rows = [];
+    foreach ($page->getDataTm() as $entry) {
+        $text = (string) ($entry[1] ?? '');
+        if (strcasecmp(trim(strip_tags($text)), 'Description') === 0) continue;
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text) ?? $text;
+        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $rows[] = trim(preg_replace('/[ \t]+/u', ' ', $text) ?? $text);
+    }
+    return $rows;
+}
+
+function parseSplitLayoutDocument(array $pages): array
+{
+    $metadataPages = [];
+    foreach ($pages as $pageIndex => $page) {
+        $rows = splitMetadataRows($page);
+        if ($rows === []) break;
+        $metadataPages[] = ['page' => $pageIndex + 1, 'rows' => $rows];
+    }
+    if ($metadataPages === []) return [[], []];
+
+    $records = [];
+    $rejected = [];
+    $descriptionStart = count($metadataPages);
+    foreach ($metadataPages as $offset => $metadataPage) {
+        $descriptionPage = $pages[$descriptionStart + $offset] ?? null;
+        if ($descriptionPage === null) return [[], []];
+        $descriptions = splitDescriptionRows($descriptionPage);
+        if (count($descriptions) !== count($metadataPage['rows'])) return [[], []];
+        foreach ($metadataPage['rows'] as $rowIndex => $row) {
+            $description = $descriptions[$rowIndex];
+            if ($description === '') {
+                $rejected[] = ['page' => $metadataPage['page'], 'row' => $row['row'], 'reason' => 'Missing description on the paired split-layout page.'];
+                continue;
+            }
+            $identifier = $row['identifier'];
+            $records[] = [
+                'identifier' => $identifier,
+                'type' => strlen($identifier) === 7 ? 'Sequence' : 'ELB WO',
+                'ac' => $row['ac'],
+                'date' => $row['date'],
+                'ata' => $row['ata'],
+                'description' => $description,
+                'page' => $metadataPage['page'],
+                'row' => $row['row'],
+                'sourceText' => $row['sourceText'] . "\n" . $description,
+                'valid' => true,
+                'reviewReasons' => [],
+            ];
+        }
+    }
+    return [$records, $rejected];
+}
+
 function diagnostics(string $fileType, int $characters, int $detected, array $records, array $rejected, array $warnings = [], int $partialRows = 0, array $development = []): array
 {
     return [
@@ -227,6 +373,14 @@ function extractPdf(string $path): array
     } catch (Throwable $error) {
         respond(['ok' => false, 'error' => 'The PDF could not be read. It may be encrypted, corrupt, or scanned.'], 422);
     }
+    $pages = $pdf->getPages();
+    [$splitRecords, $splitRejected] = parseSplitLayoutDocument($pages);
+    if ($splitRecords !== []) {
+        $allText = implode("\n", array_map(static fn(object $page): string => $page->getText(), $pages));
+        $characters = mb_strlen($allText, 'UTF-8');
+        preg_match_all('/(?<!\d)(\d{7}|\d{9})(?!\d)/', $allText, $identifierMatches);
+        return [$splitRecords, diagnostics('pdf', $characters, count($identifierMatches[1] ?? []), $splitRecords, $splitRejected, ['Split PDF columns were paired by page and row position.'])];
+    }
     $records = [];
     $partial = [];
     $rejected = [];
@@ -235,12 +389,20 @@ function extractPdf(string $path): array
     $detected = 0;
     $development = [];
     $isDevelopment = filter_var(getenv('WOM_DEV_DIAGNOSTICS') ?: 'false', FILTER_VALIDATE_BOOL);
-    foreach ($pdf->getPages() as $pageNumber => $page) {
+    foreach ($pages as $pageNumber => $page) {
         $text = $page->getText();
         $characters += mb_strlen($text, 'UTF-8');
         preg_match_all('/(?<!\d)(\d{7}|\d{9})(?!\d)/', $text, $identifierMatches);
         $detected += count($identifierMatches[1] ?? []);
         [$pageRecords, $pagePartial, $pageRejected, $pageInfo] = parseLayoutPage($page, $text, $pageNumber + 1);
+        if ($pageRecords === [] && $pagePartial === []) {
+            [$fallbackRecords, $fallbackRejected] = parseTextOrderPage($text, $pageNumber + 1);
+            if ($fallbackRecords !== []) {
+                $pageRecords = $fallbackRecords;
+                $pageRejected = $fallbackRejected;
+                $pageInfo = ['mode' => 'text-order-fallback'];
+            }
+        }
         $records = array_merge($records, $pageRecords, $pagePartial);
         $partial = array_merge($partial, $pagePartial);
         $rejected = array_merge($rejected, $pageRejected);
@@ -380,7 +542,10 @@ function matchRecords(array $records): array
         usort($candidates, fn(array $a, array $b): int => $b['score'] <=> $a['score']);
         $best = $candidates[0] ?? null;
         $secondScore = $candidates[1]['score'] ?? 0;
-        if ($best !== null && $best['score'] >= 68 && $best['score'] - $secondScore >= 8) {
+        if ($best !== null && $best['score'] >= 95) {
+            $usedElbs[$best['elb']['identifier']] = true;
+            $matches[] = makeMatch('m-' . $sequence['identifier'], $sequence['identifier'], $best['elb']['identifier'], $best['score'], 'Confirmed', $best['reason'] . ' Automatically matched because the score is at least 95%.');
+        } elseif ($best !== null && $best['score'] >= 68 && $best['score'] - $secondScore >= 8) {
             $matches[] = makeMatch('m-' . $sequence['identifier'], $sequence['identifier'], $best['elb']['identifier'], $best['score'], 'Needs Review', $best['reason'] . ' Review is required; similarity is not proof of identity.');
         } else {
             $matches[] = makeMatch('m-' . $sequence['identifier'], $sequence['identifier'], $best['elb']['identifier'] ?? null, $best['score'] ?? 0, 'Unmatched', $best ? 'Multiple or insufficient candidates; manual review is required.' : 'No ELB WO candidate was found.');
@@ -402,6 +567,10 @@ if (defined('WOM_API_LIBRARY_ONLY') && WOM_API_LIBRARY_ONLY === true) {
 $action = $_GET['action'] ?? '';
 if ($action === 'extract') {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['file'])) {
+        $contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+        if ($contentLength > 0 && empty($_POST) && empty($_FILES)) {
+            respond(['ok' => false, 'error' => 'The upload is larger than the PHP server allows. Increase upload_max_filesize and post_max_size, then restart PHP.'], 413);
+        }
         respond(['ok' => false, 'error' => 'Upload one PDF or XLSX file to extract.'], 400);
     }
     $file = $_FILES['file'];
