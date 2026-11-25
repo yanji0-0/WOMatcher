@@ -77,3 +77,13 @@ html[data-theme="dark"] #matchedPanel thead th,
 html[data-theme="dark"] #reviewPanel thead th{background:#172532!important;color:#a9b8c6!important;border-color:#304353!important}
 html[data-theme="dark"] #matchedPanel tbody td,
 html[data-theme="dark"] #reviewPanel tbody td{background:transparent;border-color:#263746!important}
+
+/* Keep rejected pairings visible below active review items. */
+.review-section-row td{padding:12px 14px!important;background:var(--danger-soft)!important;border-top:2px solid color-mix(in srgb,var(--danger) 45%,var(--border))!important;color:var(--danger)}
+.review-section-row strong{font-size:12px}.review-section-row span{margin-left:8px;color:var(--muted);font-size:11px;font-weight:400}
+html[data-theme="dark"] #reviewPanel .review-section-row td{background:var(--danger-soft)!important;border-top-color:#714047!important}
+.matches-toolbar #reviewStatusFilter{min-width:170px;margin-left:auto}
+@media(max-width:600px){.matches-toolbar #reviewStatusFilter{width:100%;margin-left:0}}
+.shared-term{background:#ffe19a;color:#4d3700;border-radius:3px;padding:1px 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.highlight-legend{margin:0 0 10px;color:var(--muted);font-size:11px}.highlight-legend mark{margin-right:3px;background:#ffe19a;color:#4d3700;border-radius:3px;padding:2px 4px}
+html[data-theme="dark"] .shared-term,html[data-theme="dark"] .highlight-legend mark{background:#6a4c13;color:#ffe5a3}

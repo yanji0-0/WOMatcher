@@ -101,7 +101,11 @@
         <div class="result-heading"><div><h2>Needs Review</h2><p>Uncertain, conflicting, and unmatched records.</p></div><strong id="reviewTotal">0 records</strong></div>
         <div class="table-toolbar matches-toolbar">
           <label class="search-field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="reviewSearch" type="search" placeholder="Search identifiers"></label>
-          <button class="btn btn-secondary" id="manualMatchBtn">Manual Match</button>
+          <select id="reviewStatusFilter" class="select-control" aria-label="Filter review records by status">
+            <option value="all">All review records</option>
+            <option value="review">Needs Review</option>
+            <option value="rejected">Rejected</option>
+          </select>
         </div>
         <div class="table-container"><table class="match-table review-table"><thead><tr><th>7-digit Sequence No.</th><th>Suggested 9-digit ELB WO</th><th>Match Score</th><th>Action</th></tr></thead><tbody id="reviewBody"></tbody></table></div>
         <div class="empty-state" id="reviewEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5 5.5-5.5"/></svg></div><h3>No records need review</h3><p>Uncertain and unmatched records will appear here after matching.</p></div>
@@ -140,8 +144,6 @@
   <div class="modal" id="confirmModal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-icon"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></div><h2 id="modalTitle">Confirm action</h2><p id="modalMessage"></p><div class="modal-actions"><button class="btn btn-secondary" data-close-modal>Cancel</button><button class="btn btn-danger" id="modalConfirmBtn">Confirm</button></div></div></div>
 
   <div class="modal" id="exportModal" aria-hidden="true"><div class="modal-backdrop" data-close-export></div><div class="modal-panel export-modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><header class="modal-header"><div><p class="eyebrow">Excel Export</p><h2 id="exportTitle">Export confirmed matches</h2></div><button class="icon-btn" data-close-export aria-label="Close export"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header><div class="export-summary"><div><span>Confirmed matches</span><strong id="exportCount">0</strong></div><div><span>Export filename</span><strong id="exportFilename">confirmed-work-order-matches.csv</strong></div><div><span>Format</span><strong>Excel-compatible CSV</strong></div></div><p class="export-note">This frontend export includes only the two identifier columns.</p><div class="modal-actions"><button class="btn btn-secondary" data-close-export>Cancel</button><button class="btn btn-primary" id="downloadCsvBtn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export Excel</button></div></div></div>
-
-  <div class="modal" id="manualModal" aria-hidden="true"><div class="modal-backdrop" data-close-manual></div><div class="modal-panel manual-modal" role="dialog" aria-modal="true"><h2>Create manual match</h2><div class="manual-fields"><label>7-digit Sequence No.<input id="manualSequence" inputmode="numeric" maxlength="7" placeholder="6397261"></label><label>9-digit ELB WO<input id="manualElb" inputmode="numeric" maxlength="9" placeholder="100000314"></label></div><div class="modal-actions"><button class="btn btn-secondary" data-close-manual>Cancel</button><button class="btn btn-primary" id="createManualBtn">Create Match</button></div></div></div>
 
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true"><div class="loading-content"><span class="spinner"></span><strong>Matching work orders...</strong><span>Comparing dates, references, and descriptions.</span></div></div>
