@@ -6,20 +6,10 @@ RUN apt-get update \
         unzip \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
-        libonig-dev \
         libpng-dev \
-        libxml2-dev \
         libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        dom \
-        gd \
-        mbstring \
-        simplexml \
-        xml \
-        xmlreader \
-        xmlwriter \
-        zip \
+    && docker-php-ext-install -j"$(nproc)" gd zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
