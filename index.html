@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>document.documentElement.dataset.theme=localStorage.getItem('wom-theme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light')</script>
-  <link rel="stylesheet" href="styles.css?v=20261125-2">
+  <link rel="stylesheet" href="styles.css?v=20261126-1">
 </head>
 <body>
   <header class="topbar">
@@ -42,14 +42,14 @@
 
     <section id="workspaceView" class="view is-active">
       <div class="section-heading">
-        <div><p class="eyebrow">PDF Intake</p><h1>Upload source documents</h1></div>
+        <div><p class="eyebrow">File Intake</p><h1>Upload source documents</h1></div>
         <div class="heading-actions">
           <button class="btn btn-ghost" id="resetBtn" disabled>Reset Matching</button>
           <button class="btn btn-primary" id="rerunBtn" disabled><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 1-2.34-5.66L20 7M20 3v4h-4"/></svg>Run Matching</button>
         </div>
       </div>
 
-      <div class="demo-notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span><strong>Single source PDF:</strong> Upload one text-based PDF containing the complete W/O table. Records are extracted locally by the PHP matching service.</span></div>
+      <div class="demo-notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span><strong>Single source file:</strong> Upload one text-based PDF or XLSX containing the complete W/O table. The original upload is previewed below after selection.</span></div>
 
       <div class="upload-grid">
         <article class="upload-card single-upload-card" data-type="source">
@@ -59,10 +59,18 @@
         </article>
       </div>
 
+      <section class="source-preview" id="sourcePreview" hidden>
+        <div class="source-preview-header">
+          <div><p class="eyebrow">Original Upload</p><h2 id="sourcePreviewTitle">Source file preview</h2><p id="sourcePreviewMeta"></p></div>
+          <button class="btn btn-secondary" id="togglePreviewBtn" type="button" aria-expanded="true">Hide Preview</button>
+        </div>
+        <div class="source-preview-body" id="sourcePreviewBody"></div>
+      </section>
+
       <section class="workspace-overview">
         <div class="section-heading compact"><div><p class="eyebrow">Processing Overview</p><h2>Current session</h2></div></div>
         <div class="metric-grid">
-          <article class="metric"><span class="metric-label">Source PDF</span><strong id="pdfMetric">0</strong><small>one file per session</small></article>
+          <article class="metric"><span class="metric-label">Source file</span><strong id="pdfMetric">0</strong><small>one file per session</small></article>
           <article class="metric"><span class="metric-label">Extracted records</span><strong id="recordMetric">0</strong><small id="recordMetricDetail">Waiting for PDF upload</small></article>
           <article class="metric"><span class="metric-label">Potential matches</span><strong id="potentialMetric">0</strong><small>ready for review</small></article>
           <article class="metric"><span class="metric-label">Confirmed</span><strong id="confirmedMetric">0</strong><small>approved matches</small></article>
@@ -78,7 +86,7 @@
         <select id="recordSort" class="select-control" aria-label="Sort records"><option value="newest">Date: newest first</option><option value="oldest">Date: oldest first</option></select>
       </div>
       <div class="table-container"><table><thead><tr><th>Record Type</th><th>Sequence No. / ELB WO</th><th><button class="sort-button" data-sort-records>Date <svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button></th><th>Work Description</th><th>Source PDF</th><th>Extraction Status</th></tr></thead><tbody id="recordsBody"></tbody></table></div>
-      <div class="empty-state" id="recordsEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5"/><path d="M10 13h5M10 17h5"/></svg></div><h3>No extracted records</h3><p>Upload one source PDF to begin extraction.</p><button class="btn btn-secondary" data-go="workspace">Go to Upload</button></div>
+      <div class="empty-state" id="recordsEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v5h5"/><path d="M10 13h5M10 17h5"/></svg></div><h3>No extracted records</h3><p>Upload one source PDF or XLSX to begin extraction.</p><button class="btn btn-secondary" data-go="workspace">Go to Upload</button></div>
       <div class="pagination" id="recordPagination"></div>
     </section>
 
@@ -146,6 +154,6 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true"><div class="loading-content"><span class="spinner"></span><strong>Matching work orders...</strong><span>Comparing dates, references, and descriptions.</span></div></div>
 
-  <script src="app.js?v=20261125-2"></script>
+  <script src="app.js?v=20261126-1"></script>
 </body>
 </html>

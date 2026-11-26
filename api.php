@@ -510,7 +510,24 @@ function extractXlsx(string $path): array
         ]), 'UTF-8'),
         $records
     ));
-    return [$records, diagnostics('xlsx', $characters, count($records) + count($rejected), $records, $rejected)];
+    $highestRow = min(100, $sheet->getHighestDataRow());
+    $highestColumn = min(30, \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($sheet->getHighestDataColumn()));
+    $previewRows = [];
+    for ($rowNumber = 1; $rowNumber <= $highestRow; $rowNumber++) {
+        $previewRow = [];
+        for ($columnNumber = 1; $columnNumber <= $highestColumn; $columnNumber++) {
+            $previewRow[] = (string) $sheet->getCell([$columnNumber, $rowNumber])->getFormattedValue();
+        }
+        $previewRows[] = $previewRow;
+    }
+    $preview = [
+        'sheet' => $sheet->getTitle(),
+        'rows' => $previewRows,
+        'totalRows' => $sheet->getHighestDataRow(),
+        'totalColumns' => \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($sheet->getHighestDataColumn()),
+        'truncated' => $sheet->getHighestDataRow() > $highestRow || \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($sheet->getHighestDataColumn()) > $highestColumn,
+    ];
+    return [$records, diagnostics('xlsx', $characters, count($records) + count($rejected), $records, $rejected), $preview];
 }
 
 function similarity(string $left, string $right): float
@@ -591,14 +608,16 @@ if ($action === 'extract') {
     if ($extension === 'pdf' && mime_content_type($file['tmp_name']) !== 'application/pdf') {
         respond(['ok' => false, 'error' => 'The uploaded file is not a valid PDF.', 'diagnostics' => diagnostics('pdf', 0, 0, [], ['MIME type validation failed.'])], 422);
     }
-    [$records, $diagnostics] = $extension === 'xlsx' ? extractXlsx($file['tmp_name']) : extractPdf($file['tmp_name']);
+    [$records, $diagnostics, $preview] = $extension === 'xlsx'
+        ? extractXlsx($file['tmp_name'])
+        : [...extractPdf($file['tmp_name']), null];
     if ($records === []) {
         $message = $diagnostics['characters'] === 0 && $extension === 'pdf'
             ? 'No text was extracted from this PDF. It may be scanned or image-only and require OCR.'
             : 'Text was extracted, but zero W/O rows matched the expected table structure.';
         respond(['ok' => false, 'error' => $message, 'diagnostics' => $diagnostics], 422);
     }
-    respond(['ok' => true, 'records' => $records, 'diagnostics' => $diagnostics]);
+    respond(['ok' => true, 'records' => $records, 'diagnostics' => $diagnostics, 'preview' => $preview]);
 }
 if ($action === 'match') {
     $input = json_decode(file_get_contents('php://input'), true);
