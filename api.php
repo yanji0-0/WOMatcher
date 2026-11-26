@@ -150,12 +150,23 @@ function headerColumns(array $lines): ?array
             foreach ($ordered as $i => $name) {
                 if ($i > 0 && $anchors[$name] <= $anchors[$ordered[$i - 1]]) continue 2;
             }
+            $descriptionEnd = null;
+            $ignoredColumns = 0;
+            foreach ($line['items'] as $item) {
+                if ($item['x'] > $anchors['description']) {
+                    $ignoredColumns++;
+                    if ($descriptionEnd === null || $item['x'] < $descriptionEnd) {
+                        $descriptionEnd = $item['x'];
+                    }
+                }
+            }
             return ['line' => $lineIndex, 'anchors' => $anchors, 'bounds' => [
                 ($anchors['wo'] + $anchors['ac']) / 2,
                 ($anchors['ac'] + $anchors['date']) / 2,
                 ($anchors['date'] + $anchors['ata']) / 2,
                 ($anchors['ata'] + $anchors['description']) / 2,
-            ]];
+                $descriptionEnd === null ? null : ($anchors['description'] + $descriptionEnd) / 2,
+            ], 'ignoredColumns' => $ignoredColumns];
         }
     }
     return null;
@@ -167,6 +178,7 @@ function lineCells(array $line, array $bounds): array
     foreach ($line['items'] as $item) {
         $column = 0;
         while ($column < 4 && $item['x'] >= $bounds[$column]) $column++;
+        if ($column === 4 && $bounds[4] !== null && $item['x'] >= $bounds[4]) continue;
         $cells[$column] = cleanCell($cells[$column] . ' ' . $item['text']);
     }
     return $cells;
@@ -231,7 +243,7 @@ function parseLayoutPage(object $pageObject, string $text, int $page): array
         }
     }
     if ($current !== null) finishLayoutRecord($current, $page, $successful, $partial, $rejected);
-    return [$successful, $partial, $rejected, ['mode' => 'positioned', 'headerLine' => $header['line'] + 1]];
+    return [$successful, $partial, $rejected, ['mode' => 'positioned', 'headerLine' => $header['line'] + 1, 'ignoredColumns' => $header['ignoredColumns']]];
 }
 
 function parseTextOrderPage(string $text, int $page): array
@@ -534,10 +546,8 @@ function matchRecords(array $records): array
             }
             $textScore = similarity($sequence['description'], $elb['description']);
             $dateBonus = $sequence['date'] !== '' && $sequence['date'] === $elb['date'] ? 15 : 0;
-            $acBonus = $sequence['ac'] !== '' && normalizeText($sequence['ac']) === normalizeText($elb['ac']) ? 10 : 0;
-            $ataBonus = $sequence['ata'] !== '' && (str_starts_with($elb['ata'], $sequence['ata']) || str_starts_with($sequence['ata'], $elb['ata'])) ? 5 : 0;
-            $score = min(99, round($textScore * 0.7 + $dateBonus + $acBonus + $ataBonus, 1));
-            $candidates[] = ['elb' => $elb, 'score' => $score, 'reason' => sprintf('Similarity %.1f%%; date %s; A/C %s; ATA %s.', $textScore, $dateBonus ? 'matches' : 'differs', $acBonus ? 'matches' : 'not confirmed', $ataBonus ? 'compatible' : 'not confirmed')];
+            $score = min(99, round($textScore * 0.85 + $dateBonus, 1));
+            $candidates[] = ['elb' => $elb, 'score' => $score, 'reason' => sprintf('Description similarity %.1f%%; date %s.', $textScore, $dateBonus ? 'matches' : 'differs')];
         }
         usort($candidates, fn(array $a, array $b): int => $b['score'] <=> $a['score']);
         $best = $candidates[0] ?? null;
