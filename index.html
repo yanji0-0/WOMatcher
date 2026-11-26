@@ -114,6 +114,12 @@
             <option value="review">Needs Review</option>
             <option value="rejected">Rejected</option>
           </select>
+          <select id="reviewScoreSort" class="select-control" aria-label="Sort review records">
+            <option value="score-asc">Match Score: ascending</option>
+            <option value="score-desc">Match Score: descending</option>
+            <option value="sequence-asc">Sequence No.: ascending</option>
+            <option value="sequence-desc">Sequence No.: descending</option>
+          </select>
         </div>
         <div class="table-container"><table class="match-table review-table"><thead><tr><th>7-digit Sequence No.</th><th>Suggested 9-digit ELB WO</th><th>Match Score</th><th>Action</th></tr></thead><tbody id="reviewBody"></tbody></table></div>
         <div class="empty-state" id="reviewEmpty"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5 5.5-5.5"/></svg></div><h3>No records need review</h3><p>Uncertain and unmatched records will appear here after matching.</p></div>
